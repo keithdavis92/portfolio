@@ -9,7 +9,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from starlette.requests import Request
 
 from db import database
-from models import user
+from models import user, RoleType
 
 
 class AuthManager:
@@ -20,7 +20,7 @@ class AuthManager:
                 "sub": user["id"],
                 "exp": datetime.utcnow() + timedelta(minutes=120)
             }
-            return jwt.encode(payload, config("SECRET_KEY", algorithm="HS256"))
+            return jwt.encode(payload, config("SECRET_KEY"), algorithm="HS256")
         except Exception as ex:
             # Log the exception
             raise ex
@@ -30,7 +30,7 @@ class CustomHTTPBearer(HTTPBearer):
     async def __call__(
         self, request: Request
     ) -> Optional[HTTPAuthorizationCredentials]:
-        res = await super().__call__()
+        res = await super().__call__(request)
 
         try:
             payload = jwt.decode(res.credentials, config("SECRET_KEY"), algorithms=["HS256"])
@@ -41,4 +41,17 @@ class CustomHTTPBearer(HTTPBearer):
             raise HTTPException(401, "Token is expired")
         except jwt.InvalidTokenError:
             raise HTTPException(401, "Invalid Token")
+
+
+oauth2_scheme = CustomHTTPBearer()
+
+
+def is_complainer(request: Request):
+    if not request.state.user["role"] == RoleType.complainer:
+        raise HTTPException(403, "User role is not permitted to send complaint")
+
+
+def is_admin(request: Request):
+    if not request.state.user["role"] == RoleType.admin:
+        raise HTTPException(403, "User role is not permitted to perform administrative tasks")
 
