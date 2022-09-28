@@ -18,7 +18,7 @@ class AuthManager:
         try:
             payload = {
                 "sub": user["id"],
-                "exp": datetime.utcnow() + timedelta(minutes=120)
+                "exp": datetime.utcnow() + timedelta(minutes=120),
             }
             return jwt.encode(payload, config("SECRET_KEY"), algorithm="HS256")
         except Exception as ex:
@@ -34,8 +34,12 @@ class CustomHTTPBearer(HTTPBearer):
         res = await super().__call__(request)
 
         try:
-            payload = jwt.decode(res.credentials, config("SECRET_KEY"), algorithms=["HS256"])
-            user_data = await database.fetch_one(user.select().where(user.c.id == payload["sub"]))
+            payload = jwt.decode(
+                res.credentials, config("SECRET_KEY"), algorithms=["HS256"]
+            )
+            user_data = await database.fetch_one(
+                user.select().where(user.c.id == payload["sub"])
+            )
             request.state.user = user_data
             return user_data
         except jwt.ExpiredSignatureError:
@@ -54,9 +58,14 @@ def is_complainer(request: Request):
 
 def is_admin(request: Request):
     if not request.state.user["role"] == RoleType.admin:
-        raise HTTPException(403, "User role is not permitted to perform administrative tasks")
+        raise HTTPException(
+            403, "User role is not permitted to perform administrative tasks"
+        )
 
 
 def is_approver(request: Request):
-    if not request.state.user["role"] == RoleType.approver or request.state.user["role"] == RoleType.admin:
+    if (
+        not request.state.user["role"] == RoleType.approver
+        or request.state.user["role"] == RoleType.admin
+    ):
         raise HTTPException(403, "User role is not permitted to perform approver tasks")

@@ -11,4 +11,3 @@ class UserRegisterIn(UserBase):
 
 class UserLoginIn(UserBase):
     password: str
-
