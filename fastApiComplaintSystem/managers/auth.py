@@ -26,6 +26,7 @@ class AuthManager:
             raise ex
 
 
+# Todo: revise
 class CustomHTTPBearer(HTTPBearer):
     async def __call__(
         self, request: Request
@@ -55,3 +56,7 @@ def is_admin(request: Request):
     if not request.state.user["role"] == RoleType.admin:
         raise HTTPException(403, "User role is not permitted to perform administrative tasks")
 
+
+def is_approver(request: Request):
+    if not request.state.user["role"] == RoleType.approver or request.state.user["role"] == RoleType.admin:
+        raise HTTPException(403, "User role is not permitted to perform approver tasks")
