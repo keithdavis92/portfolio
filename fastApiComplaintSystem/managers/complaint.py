@@ -5,10 +5,11 @@ from constants import TEMP_FILES_FOLDER
 from db import database
 from models import complaint, RoleType, State
 from services.s3 import S3Service
+from services.ses import SESService
 from utils.helpers import decode_photo
 
 s3 = S3Service()
-
+ses = SESService()
 
 class ComplaintManager:
     @staticmethod
@@ -42,3 +43,21 @@ class ComplaintManager:
     @staticmethod
     async def delete(complaint_id):
         await database.execute(complaint.delete().where(complaint.c.id == complaint_id))
+
+    @staticmethod
+    async def approve(id_):
+        await database.execute(
+            complaint.update()
+            .where(complaint.c.id == id_)
+            .values(status=State.approved)
+        )
+        ses.send_mail("Complaint Approved", ["keithdavis92@gmail.com"], "Your claim has been approved, please allow "
+                                                                        "for 3 days for your refund to process")
+
+    @staticmethod
+    async def reject(id_):
+        await database.execute(
+            complaint.update()
+            .where(complaint.c.id == id_)
+            .values(status=State.rejected)
+        )

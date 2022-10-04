@@ -3,6 +3,7 @@ from typing import Optional, List
 from fastapi import APIRouter, Depends
 
 from managers.auth import is_admin, oauth2_scheme, is_approver
+from managers.complaint import ComplaintManager
 from managers.user import UserManager
 from models import RoleType
 from schemas.response.user import UserOut
@@ -45,7 +46,7 @@ async def make_approver(user_id: int):
     status_code=204,
 )
 async def approve(complaint_id: int):
-    return await UserManager.approve(complaint_id)
+    return await ComplaintManager.approve(complaint_id)
 
 
 @router.put(
@@ -54,4 +55,4 @@ async def approve(complaint_id: int):
     status_code=204,
 )
 async def reject(complaint_id: int):
-    return await UserManager.reject(complaint_id)
+    return await ComplaintManager.reject(complaint_id)
